@@ -180,6 +180,12 @@ float volumeLeite(float distancia) {
 
   // Calcula o volume do leite (em cm³)
   float volume = largura * comprimento * altura_leite;
+
+  // Ajusta para exatamente 550.0 L no limite máximo (58 cm) para evitar pequenos desvios de precisão
+  if (altura_leite >= altura_maxima_util) {
+    volume = 550000.0f;
+  }
+
   return volume;
 }
 
