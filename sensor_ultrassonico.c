@@ -52,9 +52,7 @@ float medir_distancia_cm() {
 }
 
 // Função para calibrar a leitura bruta do sensor ultrassônico
-// Modelo ajustado para alta exatidão:
-// Ponto A: Distância real 33.0 cm -> Exibe 33.0 cm
-// Ponto B: Distância real 51.63 cm (250L) -> Exibe 51.63 cm
+
 float calibrar_distancia(float distancia_bruta) {
   if (distancia_bruta < 0.0f) {
     return distancia_bruta;
@@ -161,6 +159,13 @@ float volumeLeite(float distancia) {
 
   // Altura máxima do leite para a capacidade máxima de 550L (58 cm)
   const float altura_maxima_util = 58.0f;
+
+  // Se a distância medida for menor ou igual a 21.0 cm (limite prático do
+  // sensor), forçamos a distância para 20.0 cm para que a altura do leite
+  // seja 58.0 cm (550L).
+  if (distancia <= 21.0f) {
+    distancia = 20.0f;
+  }
 
   // Calcula a altura do leite com base na distância medida
   float altura_leite = altura_sensor - distancia;
