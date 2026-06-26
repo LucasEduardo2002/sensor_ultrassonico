@@ -148,29 +148,46 @@ float calcular_media_movel(float nova_leitura) {
   return soma / BUFFER_SIZE;
 }
 
-float volumeLeite(float distancia) {
-  // Largura do recipiente (em cm)
-  const float largura = 79.0f;
-  // Comprimento do recipiente (em cm)
-  const float comprimento = 120.0f;
+float calcular_volume_interpolado(float altura_leite) {
+  if (altura_leite <= 0.0f) {
+    return 0.0f;
+  }
+  // Zona 1: Abaixo do chanfro lateral (0 a 24 cm)
+  // Inclui a inclinação do fundo e o canal central (media ponderada de ~9.48 L/cm)
+  if (altura_leite <= 24.0f) {
+    return 9479.16f * altura_leite;
+  }
+  // Zona 2: Início do chanfro lateral até a marca de 250L (24 a 26.37 cm)
+  if (altura_leite <= 26.37f) {
+    return 227500.0f + 9493.67f * (altura_leite - 24.0f);
+  }
+  // Zona 3: Da marca de 250L até a marca de 550L (26.37 a 57.5 cm)
+  // O volume cresce um pouco mais rápido (~9.64 L/cm) pelo volume extra do chanfro
+  if (altura_leite <= 57.5f) {
+    return 250000.0f + 9637.00f * (altura_leite - 26.37f);
+  }
+  // Limite máximo de segurança (550L)
+  return 550000.0f;
+}
 
+float volumeLeite(float distancia) {
   // Altura do sensor em relação ao ponto zero de calibração (em cm)
   const float altura_sensor = 78.0f;
 
-  // Altura máxima do leite para a capacidade máxima de 550L (58 cm)
-  const float altura_maxima_util = 58.0f;
+  // Altura máxima do leite para a capacidade máxima de 550L (57.5 cm)
+  const float altura_maxima_util = 57.5f;
 
   // Se a distância medida for menor ou igual a 21.0 cm (limite prático do
-  // sensor), forçamos a distância para 20.0 cm para que a altura do leite
-  // seja 58.0 cm (550L).
+  // sensor), forçamos a distância para 20.5 cm para que a altura do leite
+  // seja 57.5 cm (550L).
   if (distancia <= 21.0f) {
-    distancia = 20.0f;
+    distancia = 20.5f;
   }
 
   // Calcula a altura do leite com base na distância medida
   float altura_leite = altura_sensor - distancia;
 
-  // Limita entre 0 e a altura máxima útil (58 cm)
+  // Limita entre 0 e a altura máxima útil (57.5 cm)
   if (altura_leite < 0.0f) {
     altura_leite = 0.0f;
   }
@@ -178,14 +195,8 @@ float volumeLeite(float distancia) {
     altura_leite = altura_maxima_util;
   }
 
-  // Calcula o volume do leite (em cm³)
-  float volume = largura * comprimento * altura_leite;
-
-  // Ajusta para exatamente 550.0 L no limite máximo (58 cm) para evitar pequenos desvios de precisão
-  if (altura_leite >= altura_maxima_util) {
-    volume = 550000.0f;
-  }
-
+  // Calcula o volume do leite (em cm³) usando a interpolação linear por zonas
+  float volume = calcular_volume_interpolado(altura_leite);
   return volume;
 }
 
